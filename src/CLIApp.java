@@ -52,15 +52,12 @@ public class CLIApp {
             return false;
         }
 
-        try {
-            double leftValue = evaluateSimpleExpression(parts[0]);
-            double rightValue = evaluateSimpleExpression(parts[1]);
-            if (Math.abs(leftValue - rightValue) > 0.0001) { // Using a small threshold to avoid floating point precision issues
-                System.out.println("The left side is not equal to the right.");
-                return false;
-            }
-        } catch (Exception e) {
-            System.out.println("Error evaluating expressions: " + e.getMessage());
+        double leftValue = evaluateSimpleExpression(parts[0]);
+        double rightValue = evaluateSimpleExpression(parts[1]);
+//        System.out.println(leftValue+","+rightValue);
+        if (leftValue != rightValue) { // Using a small threshold to avoid floating point precision issues
+            System.out.println("The left side is not equal to the right.");
+//            System.out.println("Here?");
             return false;
         }
 
@@ -71,13 +68,22 @@ public class CLIApp {
         return new ExpressionEvaluator().evaluate(expression);
     }
     private static class ExpressionEvaluator {
+        public int precedence(char op) {
+            if (op == '*' || op == '/') {
+                return 2;  // Multiplication and division have higher precedence
+            } else if (op == '+' || op == '-') {
+                return 1;  // Addition and subtraction have lower precedence
+            }
+            return 0;  // Default precedence for other characters
+        }
+
         public double evaluate(String expression) {
             char[] tokens = expression.toCharArray();
             Stack<Double> values = new Stack<>();
             Stack<Character> ops = new Stack<>();
 
             for (int i = 0; i < tokens.length; i++) {
-                if (tokens[i] == ' ') continue; // Skip spaces
+                if (tokens[i] == ' ') continue;
 
                 if (tokens[i] >= '0' && tokens[i] <= '9') {
                     StringBuffer sbuf = new StringBuffer();
@@ -85,43 +91,32 @@ public class CLIApp {
                         sbuf.append(tokens[i++]);
                     }
                     values.push(Double.parseDouble(sbuf.toString()));
-                    i--; // Since the for loop also increases i
+                    i--;
                 } else if (tokens[i] == '+' || tokens[i] == '-' || tokens[i] == '*' || tokens[i] == '/') {
-                    while (!ops.empty() && hasPrecedence(tokens[i], ops.peek())) {
+                    while (!ops.isEmpty() && precedence(tokens[i]) <= precedence(ops.peek())) {
                         values.push(applyOp(ops.pop(), values.pop(), values.pop()));
                     }
                     ops.push(tokens[i]);
                 }
             }
 
-            while (!ops.empty()) {
+            while (!ops.isEmpty()) {
                 values.push(applyOp(ops.pop(), values.pop(), values.pop()));
             }
 
             return values.pop();
         }
 
-        public boolean hasPrecedence(char op1, char op2) {
-            if ((op2 == '*' || op2 == '/') && (op1 == '+' || op1 == '-'))
-                return false;
-            else
-                return true;
-        }
-
-        public double applyOp(char op, double b, double a) {
+        private double applyOp(char op, double b, double a) {
             switch (op) {
-                case '+':
-                    return a + b;
-                case '-':
-                    return a - b;
-                case '*':
-                    return a * b;
+                case '+': return a + b;
+                case '-': return a - b;
+                case '*': return a * b;
                 case '/':
-                    if (b == 0)
-                        throw new UnsupportedOperationException("Cannot divide by zero");
+                    if (b == 0) throw new UnsupportedOperationException("Cannot divide by zero");
                     return a / b;
             }
-            return 0;
+            throw new UnsupportedOperationException("Unsupported operation " + op);
         }
     }
     private void processUserInput(String input) {
