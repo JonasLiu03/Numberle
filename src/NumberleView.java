@@ -5,6 +5,7 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Observable;
 import java.util.Observer;
+import javax.swing.border.AbstractBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.geom.RoundRectangle2D;
@@ -12,15 +13,18 @@ import java.awt.geom.RoundRectangle2D;
 public class NumberleView extends JFrame implements Observer {
     private NumberleController controller;
     private NumberleModel model;
-    private JButton[][] gridButtons = new JButton[6][7]; // 6行7列的网格按钮
+    private JButton[][] gridButtons = new JButton[6][7]; // 6行7列的网格
     private JPanel gridPanel = new JPanel(new GridLayout(6, 7));
     private JPanel inputPanel = new JPanel();
     private JTextField inputField = new JTextField(20);
     private int currentAttempt = 0;
 
-    private JButton[] numberButtons = new JButton[10];;
-    private JButton[] operationButtons = new JButton[8];;
-
+    private JButton[] numberButtons = new JButton[10];
+    private JButton[] operationButtons = new JButton[8];
+    private  Color greenColor= new Color(81,193,166);
+    private  Color orangeColor = new Color(239,153,109);
+    private Color grayColor = new Color(165,174,196);
+    private Color borderInitial = new Color(222,225,233);
     public class RoundedButton extends JButton {
         private static final int ARC_WIDTH = 10;  // 圆角的宽度
         private static final int ARC_HEIGHT = 10;  // 圆角的高度
@@ -68,11 +72,45 @@ public class NumberleView extends JFrame implements Observer {
 
             g2.setColor(useColor);
             g2.fillRoundRect(0, 0, getWidth() - 1, getHeight() - 1, ARC_WIDTH, ARC_HEIGHT);
+            // 绘制灰色边框
+            g2.setColor(borderInitial);
+            g2.setStroke(new BasicStroke(1)); // 设置边框宽度
+            g2.drawRoundRect(0, 0, getWidth()-1, getHeight()-1, ARC_WIDTH, ARC_HEIGHT);
             super.paintComponent(g2);
             g2.dispose();
 
         }
     }
+//    public class RoundedCornerBorder extends AbstractBorder {
+//        private final Color borderColor;
+//        private final int cornerRadius;
+//
+//        public RoundedCornerBorder(Color borderColor, int cornerRadius) {
+//            this.borderColor = borderColor;
+//            this.cornerRadius = cornerRadius;
+//        }
+//
+//        @Override
+//        public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+//            super.paintBorder(c, g, x, y, width, height);
+//            Graphics2D g2d = (Graphics2D) g.create();
+//            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+//            g2d.setColor(borderColor);
+//            g2d.drawRoundRect(x, y, width - 1, height - 1, cornerRadius, cornerRadius);
+//            g2d.dispose();
+//        }
+//
+//        @Override
+//        public Insets getBorderInsets(Component c) {
+//            return new Insets(this.cornerRadius, this.cornerRadius, this.cornerRadius, this.cornerRadius);
+//        }
+//
+//        @Override
+//        public Insets getBorderInsets(Component c, Insets insets) {
+//            insets.left = insets.top = insets.right = insets.bottom = this.cornerRadius;
+//            return insets;
+//        }
+//    }
     public NumberleView(NumberleModel model) {
         this.model = model;
         initializeWindow();
@@ -105,7 +143,7 @@ public class NumberleView extends JFrame implements Observer {
     }
     private void initializeWindow() {
         setTitle("Numberle");
-        setSize(800, 600);
+        setSize(820, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
         add(gridPanel, BorderLayout.CENTER);
@@ -115,12 +153,13 @@ public class NumberleView extends JFrame implements Observer {
 
     private void initializeGridPanel() {
         gridPanel.setLayout(new GridLayout(6, 7, 5, 5));
+//        gridPanel.setBorder(new RoundedCornerBorder(Color.RED,10));
         gridPanel.setBorder(BorderFactory.createEmptyBorder(5, 110, 5, 110));
         for (int i = 0; i < 6; i++) {
             for (int j = 0; j < 7; j++) {
-                Color base = new Color(100, 149, 237);  // Cornflower Blue
-                Color hover = new Color(70, 130, 180);  // Steel Blue
-                Color pressed = new Color(65, 105, 225);  // Royal Blue
+                Color base = new Color(255, 255, 255);  // Cornflower Blue
+                Color hover = new Color(255, 255, 255);  // Steel Blue
+                Color pressed = new Color(255, 255, 255);  // Royal Blue
                 RoundedButton button = new RoundedButton("", base, hover, pressed);
                 button.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 24));
                 gridButtons[i][j] = button;
@@ -160,9 +199,9 @@ public class NumberleView extends JFrame implements Observer {
 
 private void addButton(String text, JPanel panel, GridBagConstraints constraints, JButton[] buttonsArray, int index) {
     // 使用RoundedButton代替普通的JButton，以应用圆角和特定的颜色
-    Color baseColor = new Color(193, 193, 193); // 浅灰色作为基础颜色
-    Color hoverColor = new Color(210, 210, 210); // 悬浮时的颜色稍微亮一些
-    Color pressedColor = new Color(170, 170, 170); // 按下时的颜色稍微暗一些
+    Color baseColor = new Color(221, 225, 237); // 浅灰色作为基础颜色
+    Color hoverColor = new Color(231, 235, 247); // 悬浮时的颜色稍微亮一些
+    Color pressedColor = new Color(211, 215, 227); // 按下时的颜色稍微暗一些
 
     RoundedButton button = new RoundedButton(text, baseColor, hoverColor, pressedColor);
     button.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 12)); // 设置字体，可以根据需要调整
@@ -191,8 +230,15 @@ private void addButton(String text, JPanel panel, GridBagConstraints constraints
                 displayInvalidInputMessage();
             }
         } else if ("reset".equals(command)) {
-            if (controller != null) {
+//            if (controller != null) {
+//                controller.resetGame();  // Assuming there is a method in the controller to reset the game
+//            }else{
+//                displayInvalidInputMessage();
+//            }
+            if (controller != null&&currentAttempt!=0) {
                 controller.resetGame();  // Assuming there is a method in the controller to reset the game
+            }else{
+                displayInvalidInputMessage();
             }
         } else {
             inputField.setText(inputField.getText() + command);
@@ -242,6 +288,18 @@ private void addButton(String text, JPanel panel, GridBagConstraints constraints
         }
         return index;
     }
+    private void changeButtonColor(JButton button, Color color){
+        button.setBackground(color);
+        button.setForeground(Color.WHITE);
+    }
+    private void changeGridColor(JButton button, Color color, char target){
+        button.setBackground(color);
+        button.setForeground(Color.WHITE);
+        button.setText(String.valueOf(target));
+//        gridButtons[currentAttempt][i].setBackground(greenColor);
+//        gridButtons[currentAttempt][i].setForeground(Color.WHITE);
+//        gridButtons[currentAttempt][i].setText(String.valueOf(green.charAt(i)));
+    }
     private void updateGridWithFeedback(ArrayList<String> feedback) {
         clearCurrentAttemptGrid();
         String gray = feedback.get(0);
@@ -252,44 +310,52 @@ private void addButton(String text, JPanel panel, GridBagConstraints constraints
         for (int i = 0; i < 7; i++) {
             if (green.charAt(i) != '_') {
 
-                int greenIndex = loopForNumber(green.charAt(i),numberButtons);
-                if(greenIndex!=100){
-                    numberButtons[greenIndex].setBackground(Color.GREEN);
+                int greenNum = loopForNumber(green.charAt(i),numberButtons);
+                if(greenNum!=100){
+                    changeButtonColor(numberButtons[greenNum],greenColor);
                     greenCount++;
                 }
 
-                int index2 = loopForOperation(green.charAt(i),operationButtons);
-                if(index2!=100){
-                    operationButtons[index2].setBackground(Color.GREEN);
+                int greenOpe = loopForOperation(green.charAt(i),operationButtons);
+                if(greenOpe!=100){
+                    changeButtonColor(operationButtons[greenOpe],greenColor);
                     greenCount++;
                 }
-                gridButtons[currentAttempt][i].setBackground(Color.GREEN);
-                gridButtons[currentAttempt][i].setText(String.valueOf(green.charAt(i)));
+                changeGridColor(gridButtons[currentAttempt][i], greenColor, green.charAt(i));
+//                gridButtons[currentAttempt][i].setBackground(greenColor);
+//                gridButtons[currentAttempt][i].setForeground(Color.WHITE);
+//                gridButtons[currentAttempt][i].setText(String.valueOf(green.charAt(i)));
 
             } else if (orange.charAt(i) != '_') {
-                int orangeIndex = loopForNumber(orange.charAt(i),numberButtons);
-                if(orangeIndex!=100 && !numberButtons[orangeIndex].getBackground().equals(Color.GREEN)){
-                    numberButtons[orangeIndex].setBackground(Color.ORANGE);
+                int orangeNum = loopForNumber(orange.charAt(i),numberButtons);
+                if(orangeNum!=100 && !numberButtons[orangeNum].getBackground().equals(greenColor)){
+                    changeButtonColor(numberButtons[orangeNum],orangeColor);
                 }
 
-                int index2 = loopForOperation(orange.charAt(i),operationButtons);
-                if(index2!=100 && !operationButtons[index2].getBackground().equals(Color.GREEN)){
-                    operationButtons[index2].setBackground(Color.ORANGE);
+                int orangeOpe = loopForOperation(orange.charAt(i),operationButtons);
+                if(orangeOpe!=100 && !operationButtons[orangeOpe].getBackground().equals(greenColor)){
+                    changeButtonColor(operationButtons[orangeOpe],orangeColor);
                 }
-                gridButtons[currentAttempt][i].setBackground(Color.ORANGE);
-                gridButtons[currentAttempt][i].setText(String.valueOf(orange.charAt(i)));
+                changeGridColor(gridButtons[currentAttempt][i], orangeColor, orange.charAt(i));
+//                gridButtons[currentAttempt][i].setBackground(orangeColor);
+//                gridButtons[currentAttempt][i].setForeground(Color.WHITE);
+//
+//                gridButtons[currentAttempt][i].setText(String.valueOf(orange.charAt(i)));
             } else if (gray.charAt(i) != '_') {
-                int grayIndex = loopForNumber(gray.charAt(i),numberButtons);
-                if(grayIndex!=100){
-                    numberButtons[grayIndex].setBackground(Color.GRAY);
+                int grayNum = loopForNumber(gray.charAt(i),numberButtons);
+                if(grayNum!=100){
+                    changeButtonColor(numberButtons[grayNum],grayColor);
                 }
 
-                int index2 = loopForOperation(gray.charAt(i),operationButtons);
-                if(index2!=100){
-                    operationButtons[index2].setBackground(Color.GRAY);
+                int grayOpe = loopForOperation(gray.charAt(i),operationButtons);
+                if(grayOpe!=100){
+                    changeButtonColor(operationButtons[grayOpe],grayColor);
                 }
-                gridButtons[currentAttempt][i].setBackground(Color.GRAY);
-                gridButtons[currentAttempt][i].setText(String.valueOf(gray.charAt(i)));
+                changeGridColor(gridButtons[currentAttempt][i], grayColor, gray.charAt(i));
+//                gridButtons[currentAttempt][i].setBackground(grayColor);
+//                gridButtons[currentAttempt][i].setForeground(Color.WHITE);
+//
+//                gridButtons[currentAttempt][i].setText(String.valueOf(gray.charAt(i)));
             }
         }
         currentAttempt++;
@@ -321,18 +387,20 @@ private void addButton(String text, JPanel panel, GridBagConstraints constraints
     }
 
     public void resetInputPanel(){
-        Color buttonColor = new Color(193, 193, 193);
+        Color buttonColor = new Color(221, 225, 237);
         for(JButton button:numberButtons){
             button.setBackground(buttonColor);
+            button.setForeground(Color.BLACK);
         }
         for(JButton button:operationButtons){
             button.setBackground(buttonColor);
+            button.setForeground(Color.BLACK);
         }
     }
     public void resetGridPanel(){
-        Color baseColor = new Color(100, 149, 237);
-        Color hoverColor = new Color(70, 130, 180);
-        Color pressedColor = new Color(65, 105, 225);
+        Color baseColor = new Color(255, 255, 255);
+        Color hoverColor = new Color(255, 255, 255);
+        Color pressedColor = new Color(255, 255, 255);
 
         clearInputField();  // 清除输入字段
         for (int i = 0; i < gridButtons.length; i++) {
@@ -342,6 +410,7 @@ private void addButton(String text, JPanel panel, GridBagConstraints constraints
                     RoundedButton roundedButton = (RoundedButton) button;
                     roundedButton.customBackgroundSet = false;  // 重置自定义背景标志
                     roundedButton.setBackground(baseColor);  // 重置背景颜色
+                    roundedButton.setForeground(Color.BLACK);
 
                 }
                 button.setText("");  // 清除网格上的所有文本

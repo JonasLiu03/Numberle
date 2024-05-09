@@ -29,7 +29,7 @@ public class NumberleModel extends Observable {
 
     private void generateTargetEquation() {
         try {
-            var lines = Files.readAllLines(Paths.get("D:/AOOPCW/CW/src/equations.txt")); // 替换为实际路径
+            var lines = Files.readAllLines(Paths.get("D:/AOOPCW/CW/src/equations.txt"));
             targetEquation = lines.get(new Random().nextInt(lines.size()));
             System.out.println(targetEquation);
         } catch (IOException e) {
