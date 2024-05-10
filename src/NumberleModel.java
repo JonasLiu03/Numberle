@@ -7,7 +7,8 @@ import java.io.IOException;
 import java.util.Stack;
 import java.util.regex.Pattern;
 
-public class NumberleModel extends Observable {
+public class NumberleModel extends Observable implements INumberleModel{
+
     private String targetEquation;
     private int attempts;
     private ArrayList<Character> grayChars = new ArrayList<>();
@@ -26,21 +27,34 @@ public class NumberleModel extends Observable {
         setChanged();
         notifyObservers("won");
     }
-
-    private void generateTargetEquation() {
+    /**
+     * Select random equation from txt file.
+     * @pre:  None specific; the method can always execute as it initializes state.
+     * @post: targetEquation must not be null or empty after execution.
+     */
+    @Override
+    public void generateTargetEquation() {
         try {
-            var lines = Files.readAllLines(Paths.get("D:/AOOPCW/CW/src/equations.txt"));
+            var lines = Files.readAllLines(Paths.get("src/equations.txt"));
+            assert !lines.isEmpty() : "Equation list must not be empty"; // Precondition for file content
             targetEquation = lines.get(new Random().nextInt(lines.size()));
+            assert targetEquation != null && !targetEquation.isEmpty() : "Target equation must not be empty"; // Postcondition
             System.out.println(targetEquation);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
+    /**
+     * Input a guess
+     * @pre:  guess must be a non-null, 7-character string fitting the pattern.
+     * @post: attempts should increase by 1. If guess is correct, gameWon should be true.
+     */
     public boolean keepRunning(){
         return attempts<maxAttempts;
     }
-
+    @Override
     public void makeGuess(String guess) {
+        assert guess != null && guess.length() == 7 && Pattern.matches("[0-9\\+\\-\\*/=]+", guess) : "Invalid guess format"; // Precondition
         if (validateInput(guess)) {
 //            System.out.println(attempts);
             System.out.println(gameWon);
@@ -67,6 +81,7 @@ public class NumberleModel extends Observable {
                 // 处理猜测结果
                 attempts++;
                 gameWon = guess.equals(targetEquation);
+                assert !gameWon || guess.equals(targetEquation) : "Game won must be true if guess is correct"; // Postcondition for gameWon
 
                 // 使用更新后的字符串通知观察者
                 ArrayList<String> feedback = new ArrayList<>();
@@ -84,8 +99,14 @@ public class NumberleModel extends Observable {
         }
 
     }
+    /**
+     * Check whether guess is valid or not
+     * @pre:  Input should be a non-null string of length 7.
+     * @post: Return true if the input is valid, false otherwise.
+     */
+    @Override
     public boolean validateInput(String input) {
-        // 首先检查输入是否符合基本格式：由数字、运算符和等号组成的7字符字符串
+        assert input != null && input.length() == 7 : "Input must be 7 characters long"; // Precondition
         if (input.length() != 7) {
             System.out.println("Invalid input length. Please ensure the input is exactly 7 characters.");
             return false;
@@ -178,24 +199,113 @@ public class NumberleModel extends Observable {
             throw new UnsupportedOperationException("Unsupported operation " + op);
         }
     }
-    public ArrayList<Character> getGrayChars() { return grayChars; }
-
-    public ArrayList<Character> getGreenChars() { return greenChars; }
-
-    public ArrayList<Character> getOrangeChars() { return orangeChars; }
-
-    public boolean isGameWon() { return gameWon; }
-    public void gameWon(){
-        gameWon = !gameWon;
+    /**
+     * Returns the list of characters that have been identified as not present in the target equation.
+     * @pre None, as the getter has no restrictions.
+     * @post Returns the current state of grayChars; should not be null.
+     */
+    @Override
+    public ArrayList<Character> getGrayChars() {
+        assert grayChars != null : "grayChars should never be null";
+        return grayChars;
     }
-
-    public int getAttempts() { return attempts; }
+    /**
+     * Returns the list of characters correctly positioned in the target equation.
+     * @pre None, as the getter has no restrictions.
+     * @post Returns the current state of greenChars; should not be null.
+     */
+    @Override
+    public ArrayList<Character> getGreenChars() {
+        assert greenChars != null : "greenChars should never be null";
+        return greenChars;
+    }
+    /**
+     * Returns the list of characters that are present in the target equation but wrongly positioned.
+     * @pre None, as the getter has no restrictions.
+     * @post Returns the current state of orangeChars; should not be null.
+     */
+    @Override
+    public ArrayList<Character> getOrangeChars() {
+        assert orangeChars != null : "orangeChars should never be null";
+        return orangeChars;
+    }
+    /**
+     * Checks if the game has been won.
+     * @pre None, as the getter has no restrictions.
+     * @post Returns the boolean state of gameWon.
+     */
+    @Override
+    public boolean isGameWon() {
+        return gameWon;
+    }
+    /**
+     * Toggles the gameWon status.
+     * @pre None, as toggling state does not require a specific condition.
+     * @post gameWon state is toggled to its opposite value.
+     */
+    @Override
+    public void gameWon(){
+        boolean oldState = gameWon;
+        gameWon = !gameWon;
+        assert gameWon != oldState : "gameWon state must toggle";
+    }
+    /**
+     * Returns the current number of attempts made.
+     * @pre None, as the getter has no restrictions.
+     * @post Returns the count of attempts.
+     */
+    @Override
+    public int getAttempts() {
+        return attempts;
+    }
+    /**
+     * Resets the game to its initial state.
+     * @pre None specific; method can execute in any state.
+     * @post Ensures targetEquation is not null or empty, attempts reset to 0, gameWon set to false.
+     */
+    @Override
     public void reset() {
-        generateTargetEquation();  // 重新生成一个目标方程
-        attempts = 0;  // 重置尝试次数
-        gameWon = false;  // 重置游戏胜利状态
+        generateTargetEquation();  // Ensure a new target equation is set
+        int oldAttempts = attempts;
+        boolean oldGameWon = gameWon;
+        attempts = 0;
+        gameWon = false;
         setChanged();
-        notifyObservers(null);  // 可以通知观察者状态重置
+        notifyObservers(null);
+        assert targetEquation != null && !targetEquation.isEmpty() : "targetEquation must be reset to a non-empty value";
+        assert attempts == 0 && oldAttempts != 0 : "attempts must be reset to zero";
+        assert !gameWon && oldGameWon != gameWon : "gameWon must be reset to false";
+    }
+    /**
+     * Returns the target equation.
+     * @pre None, as the getter has no restrictions.
+     * @post Returns the current target equation; should not be null or empty.
+     */
+    @Override
+    public String getTargetEquation(){
+        assert targetEquation != null && !targetEquation.isEmpty() : "targetEquation must not be null or empty";
+        return targetEquation;
+    }
+    /**
+     * Returns the current number of attempts made.
+     * @pre None, as the getter has no restrictions.
+     * @post Returns the count of attempts; must be non-negative.
+     */
+    @Override
+    public int returnAttempts(){
+        assert attempts >= 0 : "attempts should always be non-negative";
+        return attempts;
+    }
+    /**
+     * Increments the count of attempts by one.
+     * @pre None specific; this operation is always permitted.
+     * @post Ensures that attempts are incremented by one from its previous value.
+     */
+    @Override
+    public void incrementAttempts(){
+        int oldAttempts = attempts;
+        attempts++;
+        assert attempts == oldAttempts + 1 : "attempts should be incremented by one";
     }
 
 }
